@@ -28,26 +28,69 @@ struct AppHeaderBar: View {
     }
 }
 
+enum DefenseSystemStatus {
+    case notCovered        // 未覆盖：透明
+    case plannedNotConsumed // 计划覆盖但未实际摄入：15% 不透明度
+    case actuallyConsumed   // 实际覆盖：100% 不透明度
+}
+
 struct DefenseRingBadge: View {
     let system: HealthDefenseSystem
-    let active: Bool
+    let status: DefenseSystemStatus
     var lineWidth: CGFloat = 4
+
+    private var ringColor: Color {
+        switch status {
+        case .notCovered:
+            return .clear
+        case .plannedNotConsumed:
+            return system.color.opacity(0.15)
+        case .actuallyConsumed:
+            return system.color
+        }
+    }
+    
+    private var iconColor: Color {
+        switch status {
+        case .notCovered:
+            return Color.gray.opacity(0.45)
+        case .plannedNotConsumed:
+            return system.color.opacity(0.15)
+        case .actuallyConsumed:
+            return system.color
+        }
+    }
+    
+    private var showRing: Bool {
+        status != .notCovered
+    }
+    
+    private var ringProgress: CGFloat {
+        switch status {
+        case .notCovered:
+            return 0.08  // 未覆盖时显示一个小点
+        case .plannedNotConsumed, .actuallyConsumed:
+            return 1.0   // 覆盖时显示完整圆环
+        }
+    }
 
     var body: some View {
         VStack(spacing: 6) {
             ZStack {
                 Circle()
                     .stroke(Color.gray.opacity(0.2), lineWidth: lineWidth)
-                Circle()
-                    .trim(from: 0, to: active ? 1 : 0.08)
-                    .stroke(
-                        active ? system.color : Color.gray.opacity(0.35),
-                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
+                if showRing {
+                    Circle()
+                        .trim(from: 0, to: ringProgress)
+                        .stroke(
+                            ringColor,
+                            style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+                }
                 Image(systemName: system.iconName)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(active ? system.color : Color.gray.opacity(0.45))
+                    .foregroundStyle(iconColor)
             }
             .frame(width: 56, height: 56)
             Text(system.shortLabel)

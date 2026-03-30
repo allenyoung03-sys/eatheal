@@ -18,6 +18,18 @@ struct DayPlanView: View {
     private var activeCount: Int {
         HealthDefenseSystem.allCases.filter { plan.coveredSystems.contains($0) }.count
     }
+    
+    private var remainingFoodsToAdd: Int {
+        max(0, 5 - plan.selectedFoods.count)
+    }
+    
+    private var addFoodButtonText: String {
+        if remainingFoodsToAdd > 0 {
+            return "请添加其他\(remainingFoodsToAdd)种以上食物"
+        } else {
+            return "添加超级食物"
+        }
+    }
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -75,7 +87,7 @@ struct DayPlanView: View {
                         HStack {
                             Image(systemName: "plus")
                                 .foregroundStyle(AppTheme.mutedText)
-                            Text("添加超级食物")
+                            Text(addFoodButtonText)
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(AppTheme.mutedText)
                         }
@@ -175,12 +187,22 @@ struct DayPlanView: View {
                     } label: {
                         DefenseRingBadge(
                             system: sys,
-                            active: plan.coveredSystems.contains(sys)
+                            status: systemStatus(for: sys)
                         )
                     }
                     .buttonStyle(.plain)
                 }
             }
+        }
+    }
+    
+    private func systemStatus(for system: HealthDefenseSystem) -> DefenseSystemStatus {
+        let isCovered = plan.coveredSystems.contains(system)
+        
+        if isCovered {
+            return .actuallyConsumed  // 在"今天"页面中，所有覆盖的系统都显示为实际覆盖
+        } else {
+            return .notCovered
         }
     }
 
@@ -231,9 +253,24 @@ struct DayPlanView: View {
                 }
             }
             Spacer()
+            
+            // 餐次标签
             Text(mealLabel(at: index))
                 .font(.caption)
                 .foregroundStyle(AppTheme.mutedText)
+                .padding(.trailing, 8)
+            
+            // 打勾按钮
+            Button {
+                model.toggleConsumed(food: food, on: today)
+            } label: {
+                Image(systemName: model.isFoodConsumed(food, on: today) ? 
+                      "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(model.isFoodConsumed(food, on: today) ? 
+                                   AppTheme.primaryGreen : Color.gray.opacity(0.6))
+            }
+            .buttonStyle(.plain)
         }
         .padding(12)
         .background(AppTheme.cardBackground)
@@ -387,8 +424,9 @@ struct FoodPickerSheet: View {
                     Button("添加 (\(pendingIds.count))") {
                         for id in pendingIds {
                             if let f = model.food(by: id) {
-                                if let fixedSystem {
-                                    model.add(food: f, to: today, forcedSystem: fixedSystem)
+                                // 使用当前活动的系统过滤器作为强制系统
+                                if let activeSystem = activeSystemFilter {
+                                    model.add(food: f, to: today, forcedSystem: activeSystem)
                                 } else {
                                     model.add(food: f, to: today)
                                 }

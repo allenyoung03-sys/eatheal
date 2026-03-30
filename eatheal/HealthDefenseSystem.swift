@@ -16,32 +16,32 @@ enum HealthDefenseSystem: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .angiogenesis: return "血管新生调控"
-        case .regeneration: return "组织再生"
-        case .dnaProtection: return "DNA 保护"
+        case .angiogenesis: return "血管生成"
+        case .regeneration: return "再生"
+        case .dnaProtection: return "DNA保护"
         case .microbiome: return "微生物组"
-        case .immunity: return "免疫系统"
+        case .immunity: return "免疫"
         }
     }
 
     /// 设计稿上的短标签
     var shortLabel: String {
         switch self {
-        case .angiogenesis: return "ANGIO"
-        case .regeneration: return "REGEN"
-        case .dnaProtection: return "DNA"
-        case .microbiome: return "MICRO"
-        case .immunity: return "IMMUNE"
+        case .angiogenesis: return "血管生成"
+        case .regeneration: return "再生"
+        case .dnaProtection: return "DNA保护"
+        case .microbiome: return "微生物组"
+        case .immunity: return "免疫"
         }
     }
 
     var tagUppercase: String {
         switch self {
-        case .angiogenesis: return "ANGIOGENESIS"
-        case .regeneration: return "REGENERATION"
-        case .dnaProtection: return "DNA PROTECTION"
-        case .microbiome: return "MICROBIOME"
-        case .immunity: return "IMMUNITY"
+        case .angiogenesis: return "血管生成"
+        case .regeneration: return "再生"
+        case .dnaProtection: return "DNA保护"
+        case .microbiome: return "微生物组"
+        case .immunity: return "免疫"
         }
     }
 

@@ -13,6 +13,7 @@ final class AppViewModel: ObservableObject {
     @Published private(set) var allFoods: [Food]
 
     @AppStorage("favoriteFoodIds") private var favoriteIdsRaw: String = ""
+    @AppStorage("consumedFoods") private var consumedFoodsRaw: String = ""
 
     private let calendar = Calendar.current
 
@@ -26,6 +27,7 @@ final class AppViewModel: ObservableObject {
             return x
         }
         self.currentWeek = WeekPlanFactory.makeWeek(startingAt: Date())
+        loadConsumedFoods()
     }
 
     /// 若今天已不在当前周区间内，则滚动到新的一周（本地原型）
@@ -113,4 +115,74 @@ final class AppViewModel: ObservableObject {
     func isFoodScheduled(_ food: Food, on date: Date) -> Bool {
         dayPlan(for: date).selectedFoods.contains { $0.id == food.id }
     }
+
+    // MARK: - 实际摄入功能
+
+    /// 切换食物的实际摄入状态
+    func toggleConsumed(food: Food, on date: Date) {
+        guard let dayIdx = dayIndex(for: date) else { return }
+        var day = currentWeek.days[dayIdx]
+        
+        if day.consumedFoodIds.contains(food.id) {
+            day.consumedFoodIds.remove(food.id)
+        } else {
+            day.consumedFoodIds.insert(food.id)
+        }
+        
+        currentWeek.days[dayIdx] = day
+        persistConsumedFoods()
+    }
+
+    /// 检查食物是否被实际摄入
+    func isFoodConsumed(_ food: Food, on date: Date) -> Bool {
+        guard let dayIdx = dayIndex(for: date) else { return false }
+        return currentWeek.days[dayIdx].consumedFoodIds.contains(food.id)
+    }
+
+    /// 加载已保存的实际摄入状态
+    private func loadConsumedFoods() {
+        guard !consumedFoodsRaw.isEmpty else { return }
+        
+        do {
+            let decoder = JSONDecoder()
+            let data = consumedFoodsRaw.data(using: .utf8) ?? Data()
+            let savedStates = try decoder.decode([ConsumedDayState].self, from: data)
+            
+            for savedState in savedStates {
+                let savedDate = Date(timeIntervalSince1970: savedState.date)
+                if let dayIdx = dayIndex(for: savedDate) {
+                    var day = currentWeek.days[dayIdx]
+                    day.consumedFoodIds = Set(savedState.consumedIds.compactMap { UUID(uuidString: $0) })
+                    currentWeek.days[dayIdx] = day
+                }
+            }
+        } catch {
+            print("Failed to load consumed foods: \(error)")
+        }
+    }
+
+    /// 持久化实际摄入状态
+    private func persistConsumedFoods() {
+        let states = currentWeek.days.map { day in
+            ConsumedDayState(
+                date: day.date.timeIntervalSince1970,
+                consumedIds: Array(day.consumedFoodIds).map { $0.uuidString }
+            )
+        }
+        
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(states)
+            consumedFoodsRaw = String(data: data, encoding: .utf8) ?? ""
+        } catch {
+            print("Failed to persist consumed foods: \(error)")
+        }
+    }
+}
+
+// MARK: - 辅助数据结构
+
+private struct ConsumedDayState: Codable {
+    let date: TimeInterval
+    let consumedIds: [String]
 }

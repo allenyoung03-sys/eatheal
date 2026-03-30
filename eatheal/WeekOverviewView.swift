@@ -105,15 +105,46 @@ struct WeekOverviewView: View {
     }
 
     private func cell(system: HealthDefenseSystem, dayIndex: Int) -> some View {
-        let covered = dayIndex < model.currentWeek.days.count &&
-            model.currentWeek.days[dayIndex].coveredSystems.contains(system)
+        guard dayIndex < model.currentWeek.days.count else {
+            return RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.white.opacity(0.01))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+                }
+                .frame(height: 28)
+                .eraseToAnyView()
+        }
+        
+        let day = model.currentWeek.days[dayIndex]
+        let plannedCovered = day.coveredSystems.contains(system)
+        let actualCovered = day.actuallyCoveredSystems.contains(system)
+        
+        // 按照用户要求的透明度规格
+        let fillColor: Color
+        if actualCovered {
+            // 实际覆盖：使用系统颜色的深色版本（100% 不透明度）
+            fillColor = system.color.opacity(1.0)
+        } else if plannedCovered {
+            // 计划覆盖但未实际摄入：使用原透明度（25% 不透明度）
+            fillColor = system.color.opacity(0.25)
+        } else {
+            // 未覆盖：透明
+            fillColor = Color.white.opacity(0.01)
+        }
+        
         return RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill(covered ? system.color.opacity(0.55) : Color.white.opacity(0.01))
+            .fill(fillColor)
             .overlay {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(covered ? system.color.opacity(0.2) : Color.gray.opacity(0.25), lineWidth: 1)
+                    .stroke(
+                        actualCovered ? system.color.opacity(0.9) : 
+                        (plannedCovered ? system.color.opacity(0.2) : Color.gray.opacity(0.25)),
+                        lineWidth: actualCovered ? 1.5 : 1
+                    )
             }
             .frame(height: 28)
+            .eraseToAnyView()
     }
 
     /// 与 DayPlan 行对齐：第 0 列对应周一
@@ -192,4 +223,10 @@ struct WeekOverviewView: View {
 #Preview {
     WeekOverviewView()
         .environmentObject(AppViewModel())
+}
+
+extension View {
+    func eraseToAnyView() -> AnyView {
+        AnyView(self)
+    }
 }
