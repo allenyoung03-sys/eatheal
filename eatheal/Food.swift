@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 struct Food: Identifiable, Hashable {
     let id: UUID
@@ -27,6 +28,14 @@ struct Food: Identifiable, Hashable {
         self.description = description
         self.tags = tags
         self.isFavorite = isFavorite
+    }
+    
+    var iconName: String {
+        systems.first?.iconName ?? "leaf.fill"
+    }
+    
+    var color: Color {
+        systems.first?.color ?? .green
     }
 }
 

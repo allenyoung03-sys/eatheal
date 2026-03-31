@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-enum HealthDefenseSystem: String, CaseIterable, Identifiable, Hashable {
+enum HealthDefenseSystem: String, CaseIterable, Identifiable, Hashable, Codable {
     case angiogenesis
     case regeneration
     case dnaProtection

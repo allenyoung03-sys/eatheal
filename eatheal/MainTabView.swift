@@ -28,11 +28,17 @@ struct MainTabView: View {
                 }
                 .tag(2)
 
+            TemplateManagementView()
+                .tabItem {
+                    Label("模板", systemImage: "bookmark.fill")
+                }
+                .tag(3)
+
             ProfileView()
                 .tabItem {
                     Label("我的", systemImage: "person.fill")
                 }
-                .tag(3)
+                .tag(4)
         }
         .tint(AppTheme.primaryGreen)
     }

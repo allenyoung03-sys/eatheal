@@ -10,6 +10,10 @@ struct WeekOverviewView: View {
 
     private let systems = HealthDefenseSystem.allCases
 
+    @State private var showingCreateTemplate = false
+    @State private var showingTemplateManagement = false
+    @State private var showingSaveConfirmation = false
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -30,10 +34,21 @@ struct WeekOverviewView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer(minLength: 8)
-                    Button {
-                        // 占位：保存为模板
+                    
+                    Menu {
+                        Button {
+                            showingSaveConfirmation = true
+                        } label: {
+                            Label("存为模板", systemImage: "bookmark.fill")
+                        }
+                        
+                        Button {
+                            showingTemplateManagement = true
+                        } label: {
+                            Label("管理模板", systemImage: "list.bullet")
+                        }
                     } label: {
-                        Label("存为模板", systemImage: "bookmark.fill")
+                        Label("模板", systemImage: "bookmark.fill")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 12)
@@ -63,6 +78,24 @@ struct WeekOverviewView: View {
         }
         .background(AppTheme.background.ignoresSafeArea())
         .onAppear { model.rollWeekIfNeeded() }
+        .sheet(isPresented: $showingCreateTemplate) {
+            CreateTemplateView()
+                .environmentObject(model)
+        }
+        .sheet(isPresented: $showingTemplateManagement) {
+            NavigationStack {
+                TemplateManagementView()
+                    .environmentObject(model)
+            }
+        }
+        .alert("保存为模板", isPresented: $showingSaveConfirmation) {
+            Button("取消", role: .cancel) { }
+            Button("保存") {
+                showingCreateTemplate = true
+            }
+        } message: {
+            Text("将当前周的食物安排保存为模板，方便以后快速应用。")
+        }
     }
 
     private var coverageMatrix: some View {

@@ -178,6 +178,77 @@ final class AppViewModel: ObservableObject {
             print("Failed to persist consumed foods: \(error)")
         }
     }
+    
+    // MARK: - 模板管理功能
+    
+    /// 保存模板
+    func saveTemplate(_ template: WeeklyFoodTemplate) {
+        var templates = loadTemplates()
+        if let index = templates.firstIndex(where: { $0.id == template.id }) {
+            templates[index] = template
+        } else {
+            templates.append(template)
+        }
+        persistTemplates(templates)
+    }
+    
+    /// 加载所有模板
+    func loadTemplates() -> [WeeklyFoodTemplate] {
+        TemplateStorage.loadTemplates()
+    }
+    
+    /// 删除模板
+    func deleteTemplate(_ id: UUID) {
+        TemplateStorage.deleteTemplate(id)
+    }
+    
+    /// 从当前周计划创建模板
+    func createTemplateFromCurrentWeek(name: String, description: String? = nil) -> WeeklyFoodTemplate {
+        WeeklyFoodTemplate(from: currentWeek, name: name, description: description)
+    }
+    
+    /// 应用模板到当前周
+    func applyTemplate(_ template: WeeklyFoodTemplate) {
+        // 确保模板有7天的数据
+        guard template.dailyFoods.count == 7 else { return }
+        
+        // 应用模板到当前周的每一天
+        for (index, dayTemplate) in template.dailyFoods.enumerated() {
+            if index < currentWeek.days.count {
+                var day = currentWeek.days[index]
+                
+                // 清空当前的食物安排
+                day.selectedFoods.removeAll()
+                day.forcedCoverageSystems.removeAll()
+                
+                // 应用模板中的食物
+                for foodId in dayTemplate.foodIds {
+                    if let food = food(by: foodId) {
+                        var foodCopy = food
+                        // 保持收藏状态
+                        if let global = allFoods.first(where: { $0.id == foodId }) {
+                            foodCopy.isFavorite = global.isFavorite
+                        }
+                        day.selectedFoods.append(foodCopy)
+                        
+                        // 应用强制系统覆盖
+                        if let forcedSystem = dayTemplate.forcedCoverageSystems[foodId] {
+                            day.forcedCoverageSystems[foodCopy.id] = forcedSystem
+                        }
+                    }
+                }
+                
+                currentWeek.days[index] = day
+            }
+        }
+        
+        // 注意：不覆盖实际摄入状态，保持原有的 consumedFoodIds
+    }
+    
+    /// 持久化模板
+    private func persistTemplates(_ templates: [WeeklyFoodTemplate]) {
+        TemplateStorage.saveTemplates(templates)
+    }
 }
 
 // MARK: - 辅助数据结构
