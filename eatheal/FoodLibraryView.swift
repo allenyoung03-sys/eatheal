@@ -9,7 +9,11 @@ private enum FoodCategoryFilter: String, CaseIterable {
     case all = "全部"
     case fruits = "水果"
     case vegetables = "蔬菜"
+    case seafood = "海鲜"
+    case nuts = "坚果"
+    case seasoning = "调味品"
     case tea = "茶饮"
+    case other = "其他"
 }
 
 struct FoodLibraryView: View {
@@ -32,7 +36,11 @@ struct FoodLibraryView: View {
         case .all: break
         case .fruits: list = list.filter { $0.tags.contains("水果") }
         case .vegetables: list = list.filter { $0.tags.contains("蔬菜") }
+        case .seafood: list = list.filter { $0.tags.contains("海鲜") }
+        case .nuts: list = list.filter { $0.tags.contains("坚果") }
+        case .seasoning: list = list.filter { $0.tags.contains("调味品") }
         case .tea: list = list.filter { $0.tags.contains("茶饮") }
+        case .other: list = list.filter { $0.tags.contains("其他") }
         }
         if let d = defenseFilter {
             list = list.filter { $0.systems.contains(d) }
