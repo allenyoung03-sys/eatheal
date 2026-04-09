@@ -140,7 +140,7 @@ struct WeekOverviewView: View {
     private func cell(system: HealthDefenseSystem, dayIndex: Int) -> some View {
         guard dayIndex < model.currentWeek.days.count else {
             return RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.white.opacity(0.01))
+                .fill(Color.white.opacity(1.0))
                 .overlay {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .stroke(Color.gray.opacity(0.25), lineWidth: 1)
@@ -153,28 +153,33 @@ struct WeekOverviewView: View {
         let plannedCovered = day.coveredSystems.contains(system)
         let actualCovered = day.actuallyCoveredSystems.contains(system)
         
-        // 按照用户要求的透明度规格
+        // 根据用户需求调整视觉表现
         let fillColor: Color
+        let borderColor: Color
+        let borderWidth: CGFloat
+        
         if actualCovered {
-            // 实际覆盖：使用系统颜色的深色版本（100% 不透明度）
-            fillColor = system.color.opacity(1.0)
+            // 状态2：实际覆盖（打勾后）- 白框覆盖颜色100%
+            fillColor = system.color.opacity(1.0)  // 100%不透明度的系统颜色
+            borderColor = system.color.opacity(0.9)  // 深色边框
+            borderWidth = 1.5
         } else if plannedCovered {
-            // 计划覆盖但未实际摄入：使用原透明度（25% 不透明度）
-            fillColor = system.color.opacity(0.25)
+            // 状态1：计划覆盖（添加食物后）- 白框外框改变颜色
+            fillColor = Color.white.opacity(1.0)  // 白色填充
+            borderColor = system.color.opacity(1.0)  // 100%不透明度的系统颜色边框
+            borderWidth = 1.5
         } else {
-            // 未覆盖：透明
-            fillColor = Color.white.opacity(0.01)
+            // 状态3：未覆盖 - 保留白框
+            fillColor = Color.white.opacity(1.0)  // 白色填充
+            borderColor = Color.gray.opacity(0.25)  // 灰色边框
+            borderWidth = 1
         }
         
         return RoundedRectangle(cornerRadius: 8, style: .continuous)
             .fill(fillColor)
             .overlay {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(
-                        actualCovered ? system.color.opacity(0.9) : 
-                        (plannedCovered ? system.color.opacity(0.2) : Color.gray.opacity(0.25)),
-                        lineWidth: actualCovered ? 1.5 : 1
-                    )
+                    .stroke(borderColor, lineWidth: borderWidth)
             }
             .frame(height: 28)
             .eraseToAnyView()
